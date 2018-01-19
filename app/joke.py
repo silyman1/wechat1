@@ -7,7 +7,7 @@ reload(sys)
 sys.setdefaultencoding('utf8')
 
 class Qiushibaike_Spider(object):
-	base_url = 'https://www.qiushibaike.com/8hr/page/'
+	base_url = 'https://www.qiushibaike.com/text/page/'
 	def oneitem(self):
 		page_num = random.randint(1,13)
 		url1 = self.base_url +str(page_num)+'/'
