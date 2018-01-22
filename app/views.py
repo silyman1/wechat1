@@ -50,8 +50,8 @@ def wechat_auth():
 				data = w.getweather(city)
 				rep_text_msg = reply.TextMsg(rec_msg.FromUserName,rec_msg.ToUserName,"%s \n %s"%(data,getTime()))
 			elif content.startswith(u"斗图"):
-				m_list= get_list()
-				for m in m_list['item']:
+				m_list= json.loads(get_list())
+				for m in m_list.get('item'):
 					m = m['media_id']
 					del_image(m)
 				media_id = get_mediaid()
@@ -85,6 +85,9 @@ def get_mediaid():
 		'access_token':get_token(),
 		'type':'image'
 	}
+	a= Doutu_Spider()
+	url = a.getpic()
+	a.save(url)
 	file_path = r'E:\gitprojects\test\a.jpg'
 	files = {'media':open(file_path,'rb')}
 	response = requests.post(url=upload_url,params = params,files=files)
