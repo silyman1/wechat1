@@ -3,6 +3,7 @@ from app import app
 import hashlib
 import requests
 import time
+import json
 import reply
 import receive
 import joke
@@ -45,11 +46,17 @@ def wechat_auth():
 				w = weather.Weather_Spider()
 				data = w.getweather(city)
 				rep_text_msg = reply.TextMsg(rec_msg.FromUserName,rec_msg.ToUserName,"%s \n %s"%(data,getTime()))
+			elif content.startswith(u"斗图"):
+				get_list()
+				media_id = get_mediaid()
+				rep_img_msg = reply.ImageMsg(rec_msg.FromUserName,rec_msg.ToUserName,media_id)
+				return rep_img_msg.send()
 			else:
 				rep_text_msg = reply.TextMsg(rec_msg.FromUserName,rec_msg.ToUserName,"回复段子可获取最新糗事百科段子、回复城市+天气可查看该城市天气\n %s"%(getTime()))
 			return rep_text_msg.send()
 		elif  rec_msg.MsgType =="image":
-			rep_img_msg = reply.ImageMsg(rec_msg.FromUserName,rec_msg.ToUserName,rec_msg.MediaId)
+			media_id = get_mediaid()
+			rep_img_msg = reply.ImageMsg(rec_msg.FromUserName,rec_msg.ToUserName,media_id)
 			return rep_img_msg.send()
 		else:
 			return 'dongdongdong'
@@ -58,3 +65,37 @@ def hello():
 	return "hello"
 def getTime():
 	return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+def get_mediaid():
+	upload_url = 'https://api.weixin.qq.com/cgi-bin/material/add_material'
+	params = {
+		'access_token':get_token(),
+		'type':'image'
+	}
+	file_path = r'E:\gitprojects\test\a.jpg'
+	files = {'media':open(file_path,'rb')}
+	response = requests.post(url=upload_url,params = params,files=files)
+	dict = response.json()
+	return dict['media_id']
+def get_token():
+	params = {
+		'grant_type':'client_credential',
+		'appid':'wxb6f15704b47df7c2',
+		'secret':'a239af3ab271dc39ca0fad597e653b2d'
+	}
+	token_url = 'https://api.weixin.qq.com/cgi-bin/token'
+	response=requests.get(url = token_url,params=params)
+	result = response.json()
+	return result['access_token']
+def get_list():
+	url="https://api.weixin.qq.com/cgi-bin/material/batchget_material"
+	params = {
+		'access_token':get_token(),
+	}
+	datas={
+		"type":"image",
+		"offset":0,
+		"count":20
+	}
+	data = json.dumps(datas)
+	a=requests.post(url=url,params= params,data =data)
+	print(a.text)
