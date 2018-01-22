@@ -9,6 +9,7 @@ import receive
 import joke
 import weather
 import xml.etree.ElementTree as ET
+from doutu_spider import Doutu_Spider
 from flask import request,make_response
 @app.route('/wechat',methods = ['GET','POST'])
 def wechat_auth():
@@ -27,6 +28,7 @@ def wechat_auth():
 			s = ''.join(s)
 			sha1str = hashlib.sha1(s.encode('utf-8')).hexdigest()
 			if sha1str == signature:
+				print 'finish'
 				return make_response(echostr)
 			else:
 				return make_response("认证失败")
@@ -34,6 +36,7 @@ def wechat_auth():
 			return "认证失败"
 	else:
 		rec_msg = receive.parse_xml(request.stream.read())
+		print rec_msg.MsgType
 		if rec_msg.MsgType == 'text':
 			content = unicode(rec_msg.Content,"utf-8")
 			if content.startswith(u"段子",0,2):
@@ -47,7 +50,10 @@ def wechat_auth():
 				data = w.getweather(city)
 				rep_text_msg = reply.TextMsg(rec_msg.FromUserName,rec_msg.ToUserName,"%s \n %s"%(data,getTime()))
 			elif content.startswith(u"斗图"):
-				get_list()
+				m_list= get_list()
+				for m in m_list['item']:
+					m = m['media_id']
+					del_image(m)
 				media_id = get_mediaid()
 				rep_img_msg = reply.ImageMsg(rec_msg.FromUserName,rec_msg.ToUserName,media_id)
 				return rep_img_msg.send()
@@ -65,6 +71,14 @@ def hello():
 	return "hello"
 def getTime():
 	return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+def del_image(mediaid):
+	del_url = 'https://api.weixin.qq.com/cgi-bin/material/del_material'
+	params ={
+		"media_id":mediaid,
+		'access_token': get_token()
+	}
+	response = requests.post(url=del_url, params=params)
+	print response
 def get_mediaid():
 	upload_url = 'https://api.weixin.qq.com/cgi-bin/material/add_material'
 	params = {
@@ -99,3 +113,4 @@ def get_list():
 	data = json.dumps(datas)
 	a=requests.post(url=url,params= params,data =data)
 	print(a.text)
+	return  a.text
