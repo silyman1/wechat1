@@ -50,15 +50,25 @@ def wechat_auth():
 				data = w.getweather(city)
 				rep_text_msg = reply.TextMsg(rec_msg.FromUserName,rec_msg.ToUserName,"%s \n %s"%(data,getTime()))
 			elif content.startswith(u"斗图"):
-				m_list= json.loads(get_list())
-				for m in m_list.get('item'):
-					m = m['media_id']
-					del_image(m)
-				media_id = get_mediaid()
-				rep_img_msg = reply.ImageMsg(rec_msg.FromUserName,rec_msg.ToUserName,media_id)
-				return rep_img_msg.send()
+				#永久素材访问次数很少
+				#m_list= json.loads(get_list())
+				#print m_list
+				#try:
+				#	for m in m_list.get('item'):
+				#		m = m['media_id']
+				#		del_image(m)
+				#except:
+				#	print 'can not del'
+				#	pass
+				if get_mediaid():
+					media_id = get_mediaid()
+					rep_img_msg = reply.ImageMsg(rec_msg.FromUserName,rec_msg.ToUserName,media_id)
+					return rep_img_msg.send()
+				else:
+					rep_text_msg = reply.TextMsg(rec_msg.FromUserName,rec_msg.ToUserName,"已达到当日访问上限 \n %s"%getTime())
+					return rep_text_msg.send()
 			else:
-				rep_text_msg = reply.TextMsg(rec_msg.FromUserName,rec_msg.ToUserName,"回复段子可获取最新糗事百科段子、回复城市+天气可查看该城市天气\n %s"%(getTime()))
+				rep_text_msg = reply.TextMsg(rec_msg.FromUserName,rec_msg.ToUserName,"回复段子可获取最新糗事百科段子、回复城市+天气可查看该城市天气，回复斗图可获取表情包\n %s"%(getTime()))
 			return rep_text_msg.send()
 		elif  rec_msg.MsgType =="image":
 			media_id = get_mediaid()
@@ -80,7 +90,7 @@ def del_image(mediaid):
 	response = requests.post(url=del_url, params=params)
 	print response
 def get_mediaid():
-	upload_url = 'https://api.weixin.qq.com/cgi-bin/material/add_material'
+	upload_url = 'https://api.weixin.qq.com/cgi-bin/media/upload'
 	params = {
 		'access_token':get_token(),
 		'type':'image'
@@ -92,7 +102,10 @@ def get_mediaid():
 	files = {'media':open(file_path,'rb')}
 	response = requests.post(url=upload_url,params = params,files=files)
 	dict = response.json()
-	return dict['media_id']
+	try:
+		return dict['media_id']
+	except:
+		return None
 def get_token():
 	params = {
 		'grant_type':'client_credential',
